@@ -24,6 +24,11 @@ All the request must be given by user as input.
 #include<stdio.h>
 int main()
 {
-  //need to take 
+  //sudo code
+  /*need to take no. of resources
+  * no. of processes and their current state
+  * then I need to find the if the system is still in safe state
+  */
+  
   
 }
