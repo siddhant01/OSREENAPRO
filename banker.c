@@ -1,5 +1,5 @@
 /* Author: Siddhant Saurabh
-   version: 2.3
+   version: 2.4
    Bugs: not started yet
 */
 /*Reena’s operating system uses an algorithm for deadlock avoidance to
@@ -25,24 +25,21 @@ All the request must be given by user as input.
 #include<stdlib.h>
 #include<stdbool.h>
 
-int allocated[100][100]={{0,0,1,2},{1,0,0,0},{1,3,5,4},{0,6,3,2},{0,0,1,4}};
-int max_resource[100][100]={{0,0,1,2},{1,7,5,0},{2,3,5,6},{0,6,5,2},{0,6,5,6}};
-int needed[100][100]={{0,0,0,0},{0,7,5,0},{1,0,0,2},{0,0,2,0},{0,6,4,2}};
+int allocated[100][100]={{0,1,0},{2,0,0},{3,0,2},{2,1,1},{0,0,2}};
+int max_resource[100][100]={{8,5,3},{3,2,2},{9,0,2},{2,2,2},{4,3,3}};
+int needed[100][100]={{8,4,3},{1,2,2},{6,0,0},{0,1,1},{4,3,1}};
 
 int process_no=5;
-int resource_no=4;
+int resource_no=3;
 
-int available[100]={0};
+//int available[100]={0};
 int new_available[100]={0};
 
 int sequence[100]={0};
-int notinsequence[100]={0};
 int notinsequenceno=0;
 int old_notinsequenceno=0;
 
 bool finish[100];
-
-int request[100];
 
 void enter()
 {
@@ -76,8 +73,8 @@ void enter()
 			needed[i][j]=max_resource[i][j]-allocated[i][j];
 		}
 	}
-		
-*/	printf("Printing needed resource matrix \n");
+*/		
+	printf("Printing needed resource matrix \n");
 	for(i=0;i<process_no;i++)
 	{
 		for(j=0;j<resource_no;j++)
@@ -90,8 +87,9 @@ void enter()
 	printf("Enter the initial available system resources : ");
 	for(i=0;i<resource_no;i++)
 	{
+		printf("%d \n",i);
 		scanf("%d",&new_available[i]);
-		available[i]=new_available[i];
+		//available[i]=new_available[i];
 	}
 }
 
@@ -137,6 +135,21 @@ int no_of_finished()
 
 void bankers_algo()
 {
+	
+	/*			Algorithum of Banker's Algorithum
+	
+	1.  LetWork and Finish be vectors of length m and n, respectively. Initialize
+		Work = Available and Finish[i] = false for i = 0, 1, ..., n . 1.
+	2.  Find an index i such that both
+			a. Finish[i] == false
+			b. Needi .Work
+			If no such i exists, go to step 4.
+	3.  Work =Work + Allocationi
+		Finish[i] = true
+		Go to step 2.
+	4.  If Finish[i] == true for all i, then the system is in a safe state.
+	
+	*/
 	int i=0,j=0;
 	
 	int sequencecounter=0;
@@ -215,27 +228,10 @@ void request_for_additional_resource()
 	*/
 	char ch=NULL;
 	int pn=0;
-	int i=0,j=0,k=0;
-	int flag=0;
-	int flag2=0;
-	int sequencecounter=0;
-	
-	int count=0;
-	
+	int i;
+	int request[100];
 	do
 	{
-		pn=0;
-		i=0,j=0,k=0;
-		flag=0;
-		flag2=0;
-		sequencecounter=0;
-		count=0;
-		for(i=0;i<resource_no;i++)
-		{
-			new_available[i]=available[i];
-		}
-		
-		
 		printf("Enter the Process no. for which additional resource you want to be before allocated extra : ");
 		scanf("%d",&pn);
 		
@@ -248,134 +244,22 @@ void request_for_additional_resource()
 				printf("Extra resources should not exceed more than the needed");
 				exit(0);
 			}
-			if(request[i]>new_available[i])
-			{
-				flag=1;
-			}
+			allocated[pn][i]+=request[i];
+			needed[pn][i]-=request[i];
+			new_available[i]-=request[i];
 		}
-		if (flag==0)
+		
+		bankers_algo();
+		
+		//for keeping the original data independent of the test case choosen in the request_for_additional_resource();
+		for(i=0;i<resource_no;i++)
 		{
-			for(i=0;i<resource_no;i++)
-			{
-				allocated[pn][i]+=request[i];
-				needed[pn][i]-=request[i];
-				new_available[i]-=request[i];
-			}
-			bankers_algo();
-			//for keeping the original data independent of the test case choosen in the request_for_additional_resource();
-			for(i=0;i<resource_no;i++)
-			{
-				allocated[pn][i]-=request[i];
-				needed[pn][i]+=request[i];
-				new_available[i]+=request[i];
-			}
+			allocated[pn][i]-=request[i];
+			needed[pn][i]+=request[i];
+			new_available[i]+=request[i];
 		}
-		
-		
-		if(flag==1)
-		{
-			printf("inside persistant flag");
-			//persistant check
-			notinsequenceno=0;
-			old_notinsequenceno=0;
-			for(i=0;i<process_no;i++)
-			{
-				sequence[i]=0;
-				//notinsequence[i]=0;
-				finish[i]=false;
-			}
-	
-			//goto
-			Redoing:
-				for(i=0;i<process_no;i++)
-				{
-					//printf("%d  i value",i);
-					bool nw=work(i);
-					if(finish[i]==false  && nw==true && i!=pn)
-					{
-						for(j=0;j<resource_no;j++)
-						{
-							new_available[j]+=allocated[i][j];
-							printf("%d ",new_available[j]);
-						}
-						printf("\n");
-						finish[i]=true;
-						printf("converted finish to true %d",finish[i]);
-						sequence[sequencecounter++]=i;
-						
-						//checking & Updating
-						if(flag2==0)
-						{
-							count=0;
-							for(j=0;j<resource_no;j++)
-							{
-								if(request[j]<=new_available[j])
-								{
-									count++;
-								}
-							}
-							if(count==resource_no)
-							{
-								flag2=1;
-								for(k=0;k<resource_no;k++)
-								{
-									allocated[pn][k]+=request[k];
-									needed[pn][k]-=request[k];
-									new_available[k]-=request[k];
-								}
-								
-								for(k=0;k<resource_no;k++)
-								{
-									new_available[k]+=allocated[pn][k];
-								}
-								finish[pn]=true;
-								printf("converted finish to true %d",finish[pn]);
-								sequence[sequencecounter++]=pn;
-							}
-						}
-	
-	
-					}
-					else if(finish[i]==false && nw==false)
-					{
-						notinsequenceno++;
-					}
-				}
-			printf("no_of_finished %d  nsn %d  onsn %d  sequence cntr %d",no_of_finished(),notinsequenceno,old_notinsequenceno,sequencecounter);
-			if(no_of_finished()==process_no)
-			{
-				printf("Processes are in Safe State and one of the Safe sequence is : ");
-				printf("< ");
-				for(i=0;i<process_no;i++)
-				{
-					printf("%d ",sequence[i]);
-				}
-				printf(">\n");
-			}
-			else if(notinsequenceno!=old_notinsequenceno)
-			{
-				old_notinsequenceno=notinsequenceno;
-				notinsequenceno=0;
-				printf("inside banker algo \n");
-				sleep(1);
-				goto Redoing;
-			}
-			else if(notinsequenceno==old_notinsequenceno)
-			{
-				printf("No Safe sequence found.\nProcesses are in Unsafe State\n");
-			}
-			
-			for(i=0;i<resource_no;i++)
-			{
-				allocated[pn][i]-=request[i];
-				needed[pn][i]+=request[i];
-				new_available[i]+=request[i];
-			}
-		}
-		
 		printf("Enter Y/y if you want to check another case, else press N/n");
-		ch=getch();
-		printf("\n");
+		scanf("%c",&ch);
 	}
 	while(ch=='Y'||ch=='y');
 }
@@ -386,4 +270,10 @@ int main()
 	bankers_algo();
 	request_for_additional_resource();
 }
+
+
+
+
+
+
 
