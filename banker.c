@@ -1,5 +1,5 @@
 /* Author: Siddhant Saurabh
-   version: 2.7
+   version: 2.9
 */
 /*Reena’s operating system uses an algorithm for deadlock avoidance to
 manage the allocation of resources say three namely A, B, and C to three
@@ -21,20 +21,19 @@ instances of C.
 All the request must be given by user as input.
 */
 #include<unistd.h>
-#include<stdio.h>
 #include<stdlib.h>
 #include<stdbool.h>
 
 //have take the default values of the question
-int allocated[100][100]={{0,0,1,2},{1,0,0,0},{1,3,5,4},{0,6,3,2},{0,0,1,4}};//{{0,0,1},{3,2,0},{2,1,1}};
-int max_resource[100][100]={{0,0,1,2},{1,7,5,0},{2,3,5,6},{0,6,5,2},{0,6,5,6}};//{{8,4,3},{6,2,0},{3,3,3}};
-int needed[100][100]={{0,0,0,0},{0,7,5,0},{1,0,0,2},{0,0,2,0},{0,6,4,2}};//{{8,4,2},{3,0,0},{1,2,2}};
+int allocated[100][100]={{0,0,1},{3,2,0},{2,1,1}};
+int max_resource[100][100]={{8,4,3},{6,2,0},{3,3,3}};
+int needed[100][100]={{8,4,2},{3,0,0},{1,2,2}};
 
-int process_no=5;//3;
-int resource_no=4;//3;
+int process_no=3;
+int resource_no=3;
 
-int available[100]={1,5,2,0};//{3,2,2};
-int new_available[100]={1,5,2,0};//{3,2,2};
+int available[100]={3,2,2};
+int new_available[100]={3,2,2};
 
 int sequence[100]={0};
 int notinsequence[100]={0};
@@ -49,61 +48,112 @@ int request[100];
 char temp[3]={0};
 int scan()
 {
-	if (read(0, temp, 1) == -1)
+	if (read(0, temp, 4) == -1)
 	{
-		write(1, "A read error has occurred\n", 26);
+		write(2, "A read error has occurred\n", 26);
 		exit(0);
 	}
 	int i=0;
 	int no=0;
-	while(temp[i]!='\0')
+	i=0;
+	while(temp[i]>=48 && temp[i]<=58)
 	{
 		no=no*10+(temp[i]-48);
 		i++;
 	}
-	read(0,temp,1);
 	return no;
 }
 
 //system call for writing
-void print(char *a)
+void print(char *a,int n)
 {
-	int i=0;
+	int i=0,j=0,l=0;
+	char s[100];
 	while(a[i]!='\0')
-		i++;
-	if ((write(1,a,i)) != i)
+	{
+		if(a[i]!='%')
+		{
+			s[j]=a[i];
+			i++;
+			j++;
+		}
+		else
+		{
+			if(a[i+1]=='d')
+			{
+				if(n!=0)
+				{
+					l=0;
+					int t=n;
+					while(t!=0)
+					{
+						t=t/10;
+						l++;
+					}
+					int t2=n;
+					for(t=l-1;t>=0;t--)
+					{
+						s[j+t]=(char)((t2%10)+48);
+						t2=t2/10;
+					}
+					j+=l;
+				}
+				else 
+				{
+					s[j]=(char)(n+48);
+					j=j+1;
+				}
+				i+=2;
+			}
+			if(a[i+1]=='c')
+			{
+				s[j]=(char)n;
+				j+=1;
+				i+=2;
+			}
+		}
+	}
+	if (n==-1 && (write(1,a,i)) != i)
+	{
 		write(1, "A write error has occurred\n",27);
+		exit(0);
+	}
+	if (n!=-1 && (write(1,s,j)) != j)
+	{
+		write(1, "A write error has occurred\n",27);
+		exit(0);
+	}
 }
 
 void enter()
 {
-	print("=============================================================================\n");
+	print("=============================================================================\n",-1);
 	int i,j;
 	//Entering the processes and their resources
-	print("Enter no. of processes: ");
+	print("Enter no. of processes: ",-1);
 	process_no=scan();
-	print("Enter no. of resources: ");
+	print("Enter no. of resources: ",-1);
 	resource_no=scan();
 	
 	//getting the allocation matrix
-	print("\"Enter all the details of a process seperated by space\" \n");
+	print("\"Enter all the details of a process seperated by space\" \n",-1);
 	for(i=0;i<process_no;i++)
 	{
-		printf("Enter allocated resources of P%d : ",i);
+		print("Enter allocated resources of P%d : ",i);
 		for(j=0;j<resource_no;j++)
 			allocated[i][j]=scan();
 	}
 	//getting the maximum resources required
 	for(i=0;i<process_no;i++)
 	{
-		printf("Enter maximum resources of P%d   : ",i);
+		print("Enter maximum resources of P%d   : ",i);
 		for(j=0;j<resource_no;j++)
 		{
 			max_resource[i][j]=scan();
 			//checking if max>=allocated
 			if(max_resource[i][j]<allocated[i][j])
 			{
-				print("Maximum resource required is less than allocated resource.\nError! \n");
+				print("Maximum resource required is less than allocated resource.\nError! \n",-1);
 				exit(0);
 			}
 			//calculating the need matrix
@@ -112,7 +162,7 @@ void enter()
 	}	
 	
 	//getting the available resources
-	print("Enter the initial available system resources : ");
+	print("Enter the initial available system resources : ",-1);
 	for(i=0;i<resource_no;i++)
 	{
 		new_available[i]=scan();
@@ -123,55 +173,55 @@ void enter()
 //for printing
 void printm()
 {
-	print("=============================================================================\n");
+	print("=============================================================================\n",-1);
 	int i,j;
-	print("Printing Allocated resource matrix \n");
-	print("    ");
+	print("Printing Allocated resource matrix \n",-1);
+	print("    ",-1);
 	for(i=0;i<resource_no;i++)
-		printf("%c  ",'A'+i);
-	print("\n");
+		print("%c  ",'A'+i);
+	print("\n",-1);
 	for(i=0;i<process_no;i++)
 	{
-		printf("P%d  ",i);
+		print("P%d  ",i);
 		for(j=0;j<resource_no;j++)
-			printf("%d  ",allocated[i][j]);
-		print("\n");
+			print("%d  ",allocated[i][j]);
+		print("\n",-1);
 	}
 	
-	print("Printing Maximum resource matrix \n");
-	print("    ");
+	print("Printing Maximum resource matrix \n",-1);
+	print("    ",-1);
 	for(i=0;i<resource_no;i++)
-		printf("%c  ",'A'+i);
-	print("\n");
+		print("%c  ",'A'+i);
+	print("\n",-1);
 	for(i=0;i<process_no;i++)
 	{
-		printf("P%d  ",i);
+		print("P%d  ",i);
 		for(j=0;j<resource_no;j++)
-			printf("%d  ",max_resource[i][j]);
-		print("\n");
+			print("%d  ",max_resource[i][j]);
+		print("\n",-1);
 	}
 	
-	print("Printing Needed resource matrix \n");
-	print("    ");
+	print("Printing Needed resource matrix \n",-1);
+	print("    ",-1);
 	for(i=0;i<resource_no;i++)
-		printf("%c  ",'A'+i);
-	print("\n");
+		print("%c  ",'A'+i);
+	print("\n",-1);
 	for(i=0;i<process_no;i++)
 	{
-		printf("P%d  ",i);
+		print("P%d  ",i);
 		for(j=0;j<resource_no;j++)
-			printf("%d  ",needed[i][j]);
-		print("\n");
+			print("%d  ",needed[i][j]);
+		print("\n",-1);
 	}
 	
-	print("Printing Available resources \n");
+	print("Printing Available resources \n",-1);
 	for(i=0;i<resource_no;i++)
-		printf("%c  ",'A'+i);
-	print("\n");
+		print("%c  ",'A'+i);
+	print("\n",-1);
 	for(i=0;i<resource_no;i++)
-		printf("%d  ",available[i]);
-	print("\n");
-	print("=============================================================================\n");
+		print("%d  ",available[i]);
+	print("\n",-1);
+	print("=============================================================================\n",-1);
 }
 
 //for finding needed[i]<=new_available[i],
@@ -215,7 +265,7 @@ void bankers_algo()
 	4.  If Finish[i] == true for all i, then the system is in a safe state.
 	
 	*/	
-	print("Applying Bankers_algorithum... \n");
+	print("Applying Bankers_algorithum... \n",-1);
 	int i=0,j=0;
 	
 	int sequencecounter=0;
@@ -244,11 +294,11 @@ void bankers_algo()
 		}
 	if(no_of_finished()==process_no)
 	{
-		print("Processes are in Safe State and one of the Safe sequence is : ");
-		print("< ");
+		print("Processes are in Safe State and one of the Safe sequence is : ",-1);
+		print("< ",-1);
 		for(i=0;i<process_no;i++)
-			printf("P%d ",sequence[i]);
-		print(">\n");
+			print("P%d ",sequence[i]);
+		print(">\n",-1);
 	}
 	else if(notinsequenceno!=old_notinsequenceno)
 	{
@@ -257,7 +307,7 @@ void bankers_algo()
 		goto Redoing;
 	}
 	else if(notinsequenceno==old_notinsequenceno)
-		print("No Safe sequence found.\nProcesses are in Unsafe State\n");
+		print("No Safe sequence found.\nProcesses are in Unsafe State\n",-1);
 }
 
 
@@ -286,7 +336,7 @@ void request_for_additional_resource()
 	
 	do
 	{
-		printf("=============================================================================\n");
+		print("=============================================================================\n",-1);
 		pn=0;
 		i=0,j=0,k=0;
 		flag=0;
@@ -298,22 +348,22 @@ void request_for_additional_resource()
 			new_available[i]=available[i];
 		
 		//taking inputs for additional resources
-		print("Enter the Process no. for which you want to give extra additional resources : ");
+		print("Enter the Process no. for which you want to give extra additional resources : ",-1);
 		pn=scan();
 		if(pn > process_no)
 		{
-			print("You have selected a wrong process\n");
+			print("You have selected a wrong process\n",-1);
 			exit(0);
 		}
-		print("\"Enter all the extra allocation seperated by space \"\n");
-		printf("Additional resource for P%d is : ",pn);
+		print("\"Enter all the extra allocation seperated by space \"\n",-1);
+		print("Additional resource for P%d is : ",pn);
 		for(i=0;i<resource_no;i++)
 		{
 			request[i]=scan();
 			//for checking request<=need, else wrong
 			if(request[i]>needed[pn][i])
 			{
-				print("Extra resources should not exceed more than the needed\nError!");
+				print("Extra resources should not exceed more than the needed\nError!",-1);
 				exit(0);
 			}
 			//for checking request<new_available, else waiting needs to be done
@@ -341,7 +391,7 @@ void request_for_additional_resource()
 		//for waiting case
 		if(flag==1)
 		{
-			print("Resources are not availbale righ now, but will be allocated as soon as they become free \n");
+			print("Resources are not availbale righ now, but will be allocated as soon as they become free \n",-1);
 			//persistant checking is done here
 			//most of the code is of bankers algorithum here
 			notinsequenceno=0;
@@ -352,7 +402,7 @@ void request_for_additional_resource()
 				finish[i]=false;
 			}
 			
-			print("Applying Bankers_Algorithum...\n");
+			print("Applying Bankers_Algorithum...\n",-1);
 			//goto
 			Redoing2:
 				for(i=0;i<process_no;i++)
@@ -375,7 +425,7 @@ void request_for_additional_resource()
 							if(count==resource_no)
 							{
 								flag2=1;
-								print("Found available resources so now applying the new requirements of the resources...\n");
+								print("Found available resources so now applying the new requirements of the resources...\n",-1);
 								//updating the allocated, needed matrix, and new_availbale 
 								for(k=0;k<resource_no;k++)
 								{
@@ -397,11 +447,11 @@ void request_for_additional_resource()
 				}
 			if(no_of_finished()==process_no)
 			{
-				print("Processes are in Safe State and one of the Safe sequence is : ");
-				print("< ");
+				print("Processes are in Safe State and one of the Safe sequence is : ",-1);
+				print("< ",-1);
 				for(i=0;i<process_no;i++)
-					printf("P%d ",sequence[i]);
-				print(">\n");
+					print("P%d ",sequence[i]);
+				print(">\n",-1);
 			}
 			else if(notinsequenceno!=old_notinsequenceno)
 			{
@@ -410,7 +460,7 @@ void request_for_additional_resource()
 				goto Redoing2;
 			}
 			else if(notinsequenceno==old_notinsequenceno)
-				print("No Safe sequence found.\nProcesses are in Unsafe State\n");
+				print("No Safe sequence found.\nProcesses are in Unsafe State\n",-1);
 			//for keeping the original data independent of the test case choosen in the request_for_additional_resource();
 			if(flag2==1)
 				for(i=0;i<resource_no;i++)
@@ -421,7 +471,7 @@ void request_for_additional_resource()
 		}
 		
 		//for checking if user wants more test cases to be inputed
-		print("Enter 1 if you want to check another case, else press 0 : ");
+		print("Enter 1 if you want to check another case, else press 0 : ",-1);
 		ch=scan();
 	}
 	while(ch==1);
@@ -430,7 +480,7 @@ void request_for_additional_resource()
 int main()
 {
 	int ch;
-	print("Want to input your own case (1) or you want to take the default case (0) : ");
+	print("Want to input your own case (1) or you want to take the default case (0) : ",-1);
 	ch=scan();
 	if(ch==1)
 		enter();
@@ -439,4 +489,3 @@ int main()
 	request_for_additional_resource();
 	return 0;
 }
-
