@@ -1,5 +1,5 @@
 /* Author: Siddhant Saurabh
-   version: 2.9
+   version: 3.0
 */
 /*Reena’s operating system uses an algorithm for deadlock avoidance to
 manage the allocation of resources say three namely A, B, and C to three
@@ -45,23 +45,48 @@ bool finish[100];
 int request[100];
 
 //system call for reading
-char temp[3]={0};
-int scan()
+char temp[20]={0};
+void scan(int *a,int n)
 {
-	if (read(0, temp, 4) == -1)
+	int k=0;
+	for(k=0;k<20;k++)
+		temp[k]=0;
+	if (read(0, temp, 20) == -1)
 	{
-		write(2, "A read error has occurred\n", 26);
+		write(1, "A read error has occurred\n", 26);
 		exit(0);
 	}
-	int i=0;
-	int no=0;
-	i=0;
-	while(temp[i]>=48 && temp[i]<=58)
+	if (n==1)
 	{
-		no=no*10+(temp[i]-48);
-		i++;
+
+		int i=0;
+		int no=0;
+		i=0;
+		while(temp[i]>=48 && temp[i]<=58)
+		{
+			no=no*10+(temp[i]-48);
+			i++;
+		}
+		*a=no;
 	}
-	return no;
+	else
+	{
+		int i=0;
+		int no=0;
+		int j=0;
+		while(temp[i]!=9 && temp[i]!=10 && temp[i]!=0 && temp[i]!='\0')
+		{
+			if(temp[i]!=' ')
+				no=no*10+(temp[i]-48);
+			else
+			{
+				a[j++]=no;
+				no=0;
+			}
+			i++;
+		}
+		a[j]=no;
+	}
 }
 
 //system call for writing
@@ -127,29 +152,28 @@ void print(char *a,int n)
 
 void enter()
 {
-	print("=============================================================================\n",-1);
+	print("==================================================================================\n",-1);
 	int i,j;
 	//Entering the processes and their resources
 	print("Enter no. of processes: ",-1);
-	process_no=scan();
+	scan(&process_no,1);
 	print("Enter no. of resources: ",-1);
-	resource_no=scan();
+	scan(&resource_no,1);
 	
 	//getting the allocation matrix
 	print("\"Enter all the details of a process seperated by space\" \n",-1);
 	for(i=0;i<process_no;i++)
 	{
 		print("Enter allocated resources of P%d : ",i);
-		for(j=0;j<resource_no;j++)
-			allocated[i][j]=scan();
+		scan(allocated[i],resource_no);
 	}
 	//getting the maximum resources required
 	for(i=0;i<process_no;i++)
 	{
 		print("Enter maximum resources of P%d   : ",i);
+		scan(max_resource[i],resource_no);
 		for(j=0;j<resource_no;j++)
 		{
-			max_resource[i][j]=scan();
 			//checking if max>=allocated
 			if(max_resource[i][j]<allocated[i][j])
 			{
@@ -163,17 +187,15 @@ void enter()
 	
 	//getting the available resources
 	print("Enter the initial available system resources : ",-1);
+	scan(new_available,resource_no);
 	for(i=0;i<resource_no;i++)
-	{
-		new_available[i]=scan();
 		available[i]=new_available[i];
-	}
 }
 
 //for printing
 void printm()
 {
-	print("=============================================================================\n",-1);
+	print("==================================================================================\n",-1);
 	int i,j;
 	print("Printing Allocated resource matrix \n",-1);
 	print("    ",-1);
@@ -221,7 +243,7 @@ void printm()
 	for(i=0;i<resource_no;i++)
 		print("%d  ",available[i]);
 	print("\n",-1);
-	print("=============================================================================\n",-1);
+	print("==================================================================================\n",-1);
 }
 
 //for finding needed[i]<=new_available[i],
@@ -336,7 +358,7 @@ void request_for_additional_resource()
 	
 	do
 	{
-		print("=============================================================================\n",-1);
+		print("==================================================================================\n",-1);
 		pn=0;
 		i=0,j=0,k=0;
 		flag=0;
@@ -349,7 +371,7 @@ void request_for_additional_resource()
 		
 		//taking inputs for additional resources
 		print("Enter the Process no. for which you want to give extra additional resources : ",-1);
-		pn=scan();
+		scan(&pn,1);
 		if(pn > process_no)
 		{
 			print("You have selected a wrong process\n",-1);
@@ -357,9 +379,9 @@ void request_for_additional_resource()
 		}
 		print("\"Enter all the extra allocation seperated by space \"\n",-1);
 		print("Additional resource for P%d is : ",pn);
+		scan(request,resource_no);
 		for(i=0;i<resource_no;i++)
 		{
-			request[i]=scan();
 			//for checking request<=need, else wrong
 			if(request[i]>needed[pn][i])
 			{
@@ -472,7 +494,7 @@ void request_for_additional_resource()
 		
 		//for checking if user wants more test cases to be inputed
 		print("Enter 1 if you want to check another case, else press 0 : ",-1);
-		ch=scan();
+		scan(&ch,1);
 	}
 	while(ch==1);
 }
@@ -481,7 +503,7 @@ int main()
 {
 	int ch;
 	print("Want to input your own case (1) or you want to take the default case (0) : ",-1);
-	ch=scan();
+	scan(&ch,1);
 	if(ch==1)
 		enter();
 	printm();
